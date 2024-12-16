@@ -147,7 +147,8 @@ export const useChainTokenBalances = ({ chainId, balances }: ChainTokenBalancesP
 
   const detailRows = useEnhanceDetailRows(rawDetailRows)
 
-  const { evmNetwork } = balances.sorted[0]
+  const { evmNetwork } = useMemo(() => balances.sorted[0], [balances])
+
   const relay = useChain(chain?.relay?.id)
   const networkType = useNetworkCategory({ chain, evmNetwork, relay })
 
