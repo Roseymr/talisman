@@ -33,10 +33,11 @@ import {
   MnemonicCreateModalProvider,
   useMnemonicCreateModal,
 } from "@ui/apps/dashboard/routes/Settings/Mnemonics/MnemonicCreateModal"
+import { AccountIcon } from "@ui/domains/Account/AccountIcon"
 import { AccountTypeSelector } from "@ui/domains/Account/AccountTypeSelector"
 import { useAccounts, useMnemonics } from "@ui/state"
 
-import { AccountIcon } from "../../AccountIcon"
+import { BackToAddAccountButton } from "../BackToAddAccountButton"
 import { AccountAddPageProps } from "../types"
 import { AccountAddMnemonicDropdown } from "./AccountAddMnemonicDropdown"
 
@@ -253,7 +254,9 @@ const AccountAddDerivedFormInner: FC<AccountAddPageProps> = ({ onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit(submit)}>
-      <AccountTypeSelector defaultType={urlParamType} onChange={handleTypeChange} />
+      {!urlParamType && (
+        <AccountTypeSelector defaultType={urlParamType} onChange={handleTypeChange} />
+      )}
       <Spacer small />
       <div className={classNames("transition-opacity", type ? "opacity-100" : "opacity-0")}>
         {!!mnemonics.length && (
@@ -306,7 +309,8 @@ const AccountAddDerivedFormInner: FC<AccountAddPageProps> = ({ onSuccess }) => {
         </AdvancedSettings>
         <Spacer small />
 
-        <div className="flex w-full items-center justify-end">
+        <div className="flex w-full items-center justify-between">
+          <BackToAddAccountButton />
           <Button
             icon={ArrowRightIcon}
             type="submit"
