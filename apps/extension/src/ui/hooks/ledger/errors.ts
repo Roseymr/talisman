@@ -11,6 +11,7 @@ type NativeLedgerError = {
   name?: string // if error raised by @zondax/*
   statusCode?: number // if error raised by @zondax/*
   returnCode?: number // if error raised by @ledgerhq/hw-transport
+  code?: number // if error raised by @ledgerhq/hw-transport-webusb
 }
 
 // used to generate an error-like object when using an api (substrate legacy app) that returns error message as part of the response without throwing it
@@ -26,6 +27,7 @@ export const getCustomNativeLedgerError = (
 }
 
 type TalismanLedgerErrorName =
+  | "Custom"
   | "Unknown"
   | "UnsupportedVersion"
   | "InvalidApp"
@@ -46,15 +48,14 @@ export class TalismanLedgerError extends Error {
   }
 }
 
-export const getCustomTalismanLedgerError = (errorOrMessage: unknown): TalismanLedgerError => {
-  if (errorOrMessage instanceof TalismanLedgerError) return errorOrMessage
+export const getTalismanLedgerError = (
+  error: unknown,
+  appName: string = "Unknown App",
+): TalismanLedgerError => {
+  if (error instanceof TalismanLedgerError) return error
 
-  if (typeof errorOrMessage === "string") return new TalismanLedgerError("Unknown", errorOrMessage)
+  if (typeof error === "string") return new TalismanLedgerError("Custom", error)
 
-  return getTalismanLedgerError(errorOrMessage as NativeLedgerError, "substrate")
-}
-
-export const getTalismanLedgerError = (error: unknown, appName: string): TalismanLedgerError => {
   log.log("getTalismanLedgerError", { error })
 
   const cause = error as NativeLedgerError
@@ -84,7 +85,7 @@ export const getTalismanLedgerError = (error: unknown, appName: string): Talisma
       case "InvalidStateError":
         return new TalismanLedgerError(
           "Unknown",
-          t("Failed to connect to Ledger (invalid state)"),
+          t("Failed to connect to Ledger (invalid state). Ledger might be busy."),
           { cause },
         )
 
@@ -115,7 +116,6 @@ export const getTalismanLedgerError = (error: unknown, appName: string): Talisma
 
   // Polkadot specific errors, wrapped in simple Error object
   // only message is available
-  // TODO Check if still a thing since ledger generic app
   switch (cause.message) {
     case "Timeout": // this one is throw by Talisman in case of timeout when calling ledger.getAddress
       return new TalismanLedgerError("Timeout", t("Failed to connect to your Ledger (timeout)"), {
@@ -182,11 +182,10 @@ export const getTalismanLedgerError = (error: unknown, appName: string): Talisma
   // eslint-disable-next-line no-console
   DEBUG && console.warn("unmanaged ledger error", { error })
 
-  return new TalismanLedgerError(
-    "Unknown",
-    t("Failed to connect to your Ledger. Click here to retry."),
-    { cause },
-  )
+  // If available, display the actual error message so our help-desk can understand what s going on
+  return new TalismanLedgerError("Unknown", cause.message ?? "Failed to connect to your Ledger", {
+    cause,
+  })
 }
 
 const getErrorFromCode = (code: number | undefined, appName: string, cause: unknown) => {
@@ -200,6 +199,7 @@ const getErrorFromCode = (code: number | undefined, appName: string, cause: unkn
 
     case 27404: // locked
     case 27010:
+    case 21781:
       return new TalismanLedgerError("Locked", t("Please unlock your Ledger"), { cause })
 
     case 28160: // non-compatible app
