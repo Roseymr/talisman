@@ -1,5 +1,6 @@
 import { FolderPlusIcon, MoreHorizontalIcon, PlusIcon } from "@talismn/icons"
 import { classNames } from "@talismn/util"
+import { DEBUG } from "extension-shared"
 import { FC, ReactNode, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -65,7 +66,8 @@ export const ManageAccountsToolbar: FC<{
       </div>
       <ToolbarButton icon={FolderPlusIcon} onClick={openNewFolderModal} label={t("Add Folder")} />
       <ToolbarButton icon={PlusIcon} onClick={addNewAccountClick} label={t("Add Account")} />
-      <AccountsContextMenu />
+      {/* Still work in progress, hide until finished */}
+      {DEBUG && <AccountsContextMenu />}
     </div>
   )
 }
