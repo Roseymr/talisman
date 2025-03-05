@@ -8,7 +8,7 @@ import { Address, Balances } from "@extension/core"
 import { sortBigBy } from "@talisman/util/bigHelper"
 import { ROOT_NETUID } from "@ui/domains/Staking/Bittensor/constants"
 import { cleanupNomPoolName } from "@ui/domains/Staking/helpers"
-import { useGetBittensorValidators } from "@ui/domains/Staking/hooks/bittensor/useGetBittensorValidator"
+import { useCombinedBittensorValidatorsData } from "@ui/domains/Staking/hooks/bittensor/useCombinedBittensorValidatorsData"
 import { useBalancesStatus } from "@ui/hooks/useBalancesStatus"
 import { useNetworkCategory } from "@ui/hooks/useNetworkCategory"
 import { useChain, useSelectedCurrency, useToken } from "@ui/state"
@@ -132,15 +132,17 @@ export const useTokenBalances = ({ tokenId, balances }: TokenBalancesParams) => 
       b.subtensor.map((subtensor, index) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { meta } = subtensor as any
-        const title = getLockTitle({
+        const rootTitle = getLockTitle({
           label: "subtensor-staking",
         })
+        const subnetTitle =
+          meta.netuid && meta.dynamicInfo?.subnetIdentity?.subnetName
+            ? `Subnet Staking [${meta.netuid}] ${meta.dynamicInfo?.subnetIdentity?.subnetName}`
+            : "Subnet Staking"
+
         return {
           key: `${b.id}-subtensor-${index}`,
-          title:
-            meta.netuid === ROOT_NETUID
-              ? title
-              : `Subnet Staking [${meta.netuid}] ${meta.dynamicInfo?.subnetIdentity?.subnetName}`,
+          title: meta.netuid === ROOT_NETUID ? rootTitle : subnetTitle,
           description: meta?.description ?? undefined,
           tokens: BigNumber(subtensor.amount.tokens),
           fiat: subtensor.amount.fiat(currency),
@@ -179,17 +181,8 @@ export const useTokenBalances = ({ tokenId, balances }: TokenBalancesParams) => 
 }
 
 const useEnhanceDetailRows = (detailRows: BalanceDetailRow[]) => {
-  // fetch the validator name for each subtensor staking lock, so we can display it in the description
-  const hotkeys = useMemo(() => {
-    return detailRows
-      .filter((row) => row.meta?.type === "subtensor-staking" && !!row.meta?.hotkey)
-      .map((row) => row.meta?.hotkey as string)
-  }, [detailRows])
-
-  const { data: validators, isLoading: isLoadingValidators } = useGetBittensorValidators({
-    hotkeys,
-    isEnabled: !!hotkeys.length,
-  })
+  const { combinedValidatorsData, isLoading: isLoadingCombinedValidators } =
+    useCombinedBittensorValidatorsData()
 
   return useMemo(() => {
     return detailRows
@@ -197,8 +190,8 @@ const useEnhanceDetailRows = (detailRows: BalanceDetailRow[]) => {
         if (row.meta?.type === "subtensor-staking")
           return {
             ...row,
-            description: validators?.find((v) => v?.hotkey.ss58 === row.meta.hotkey)?.name,
-            isLoading: isLoadingValidators,
+            description: combinedValidatorsData?.find((v) => v?.poolId === row.meta.hotkey)?.name,
+            isLoading: isLoadingCombinedValidators,
           } as BalanceDetailRow
 
         return row
@@ -215,5 +208,5 @@ const useEnhanceDetailRows = (detailRows: BalanceDetailRow[]) => {
 
         return 0 // Preserve relative order for others
       })
-  }, [detailRows, isLoadingValidators, validators])
+  }, [detailRows, combinedValidatorsData, isLoadingCombinedValidators])
 }
