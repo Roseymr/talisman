@@ -2,10 +2,11 @@ import { AccountsStore } from "@polkadot/extension-base/stores"
 import keyring from "@polkadot/ui-keyring"
 import { assert } from "@polkadot/util"
 import { cryptoWaitReady } from "@polkadot/util-crypto"
-import { DEBUG, PORT_CONTENT, PORT_EXTENSION } from "extension-shared"
+import { DEBUG, log, PORT_CONTENT, PORT_EXTENSION } from "extension-shared"
 
 import { sentry } from "./config/sentry"
 import { passwordStore } from "./domains/app/store.password"
+import { sessionStore } from "./domains/app/store.session"
 import talismanHandler from "./handlers"
 import { IconManager } from "./libs/IconManager"
 import { MigrationRunner, migrations } from "./libs/migrations"
@@ -113,3 +114,7 @@ cryptoWaitReady()
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const iconManager = new IconManager()
+
+sessionStore.reset().catch((err) => {
+  log.error("Failed to reset session store", err)
+})
