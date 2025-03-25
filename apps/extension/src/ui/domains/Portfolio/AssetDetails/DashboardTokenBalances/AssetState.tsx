@@ -1,4 +1,4 @@
-import { Address } from "@extension/core"
+import { Address } from "extension-core"
 
 import { PortfolioAccount } from "../PortfolioAccount"
 

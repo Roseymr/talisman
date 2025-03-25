@@ -1,9 +1,9 @@
 import { ArrowDownIcon, CreditCardIcon } from "@talismn/icons"
+import { Balances } from "extension-core"
 import { FC, useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { PillButton } from "talisman-ui"
 
-import { Balances } from "@extension/core"
 import { FadeIn } from "@talisman/components/FadeIn"
 import { useBuyTokensModal } from "@ui/domains/Asset/Buy/hooks/useBuyTokensModal"
 import { useCopyAddressModal } from "@ui/domains/CopyAddress"

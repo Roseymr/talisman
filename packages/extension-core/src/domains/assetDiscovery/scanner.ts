@@ -1,8 +1,8 @@
-import keyring from "@polkadot/ui-keyring"
 import PromisePool from "@supercharge/promise-pool"
 import { erc20Abi, erc20BalancesAggregatorAbi, EvmErc20Token } from "@talismn/balances"
 import { abiMulticall } from "@talismn/balances/src/modules/abis/multicall"
 import { EvmNetwork, EvmNetworkId, Token, TokenId, TokenList } from "@talismn/chaindata-provider"
+import { isAccountEthereum } from "@talismn/keyring"
 import { isEthereumAddress, throwAfter } from "@talismn/util"
 import { log } from "extension-shared"
 import { isEqual, uniq } from "lodash"
@@ -23,12 +23,12 @@ import { PublicClient } from "viem"
 import { db } from "../../db"
 import { chainConnectorEvm } from "../../rpcs/chain-connector-evm"
 import { chaindataProvider } from "../../rpcs/chaindata"
-import { awaitKeyringLoaded } from "../../util/awaitKeyringLoaded"
 import { isEvmToken } from "../../util/isEvmToken"
 import { appStore } from "../app/store.app"
 import { passwordStore } from "../app/store.password"
 import { activeEvmNetworksStore, isEvmNetworkActive } from "../ethereum/store.activeEvmNetworks"
 import { EvmAddress } from "../ethereum/types"
+import { keyringStore } from "../keyring/store"
 import { activeTokensStore, isTokenActive } from "../tokens/store.activeTokens"
 import { AssetDiscoveryScanState, assetDiscoveryStore } from "./store"
 import { AssetDiscoveryScanScope, DiscoveredBalance } from "./types"
@@ -71,15 +71,13 @@ class AssetDiscoveryScanner {
   }
 
   private watchNewAccounts = async () => {
-    await awaitKeyringLoaded()
-
     let prevAllAddresses: string[] | null = null
 
     // identify newly added accounts and scan those
-    keyring.accounts.subject
+    keyringStore.accounts$
       .pipe(
         debounceTime(500),
-        map((accounts) => Object.keys(accounts).sort()),
+        map((accounts) => accounts.map((account) => account.address).sort()),
         distinct((addresses) => addresses.join("")),
       )
       .subscribe(async (allAddresses) => {
@@ -130,7 +128,8 @@ class AssetDiscoveryScanner {
             )
 
             if (networkIds.length) {
-              const addresses = keyring.getAccounts().map((acc) => acc.address)
+              const accounts = await keyringStore.getAccounts()
+              const addresses = accounts.map((acc) => acc.address)
 
               log.debug("[AssetDiscovery] New enabled networks detected, starting scan", {
                 addresses,
@@ -158,9 +157,8 @@ class AssetDiscoveryScanner {
       )
       .subscribe(async () => {
         try {
-          await awaitKeyringLoaded()
-
-          const addresses = keyring.getAccounts().map((acc) => acc.address)
+          const accounts = await keyringStore.getAccounts()
+          const addresses = accounts.map((acc) => acc.address)
           const networkIds = await getNetworkIdsToForceScan()
 
           if (!addresses.length || !networkIds.length) return
@@ -454,11 +452,8 @@ class AssetDiscoveryScanner {
     if (!isAssetDiscoveryScanPending) return
 
     // addresses of all ethereum accounts
-    await awaitKeyringLoaded()
-    const addresses = keyring
-      .getAccounts()
-      .filter((acc) => isEthereumAddress(acc.address))
-      .map((acc) => acc.address)
+    const accounts = await keyringStore.getAccounts()
+    const addresses = accounts.filter(isAccountEthereum).map((acc) => acc.address)
 
     // all active evm networks
     const [evmNetworks, activeEvmNetworks] = await Promise.all([

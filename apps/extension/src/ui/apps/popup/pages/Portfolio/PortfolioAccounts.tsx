@@ -9,19 +9,22 @@ import {
   SettingsIcon,
 } from "@talismn/icons"
 import { classNames } from "@talismn/util"
+import {
+  Account,
+  AccountsCatalogTree,
+  AccountType,
+  getAccountGenesisHash,
+  getAccountSignetUrl,
+  isAccountPortfolio,
+  TreeFolder,
+  TreeItem,
+} from "extension-core"
 import { FC, Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { BehaviorSubject } from "rxjs"
 import { IconButton, Tooltip, TooltipContent, TooltipTrigger } from "talisman-ui"
 
-import {
-  AccountJsonAny,
-  AccountsCatalogTree,
-  AccountType,
-  TreeFolder,
-  TreeItem,
-} from "@extension/core"
 import { SearchInput } from "@talisman/components/SearchInput"
 import { SuspenseTracker } from "@talisman/components/SuspenseTracker"
 import { api } from "@ui/api"
@@ -78,7 +81,7 @@ type AccountAccountOption = {
   address: string
   total?: number
   genesisHash?: string | null
-  origin?: AccountType
+  accountType?: AccountType
   isPortfolio?: boolean
   signetUrl?: string
   searchContent: string
@@ -153,7 +156,7 @@ const AccountButton: FC<{ option: AccountAccountOption }> = ({ option }) => {
             <div className="truncate">{option.name}</div>
             <AccountTypeIcon
               className="text-primary"
-              origin={option.origin}
+              type={option.accountType}
               signetUrl={option.signetUrl}
             />
           </div>
@@ -279,7 +282,7 @@ const Accounts = ({
   portfolioOptions,
   watchedOptions,
 }: {
-  accounts: AccountJsonAny[]
+  accounts: Account[]
   folder?: TreeFolder | null
   folderTotal?: number
   portfolioOptions: AccountOption[]
@@ -379,8 +382,8 @@ export const PortfolioAccounts = () => {
             ? accounts.find((account) => account.address === item.address)
             : undefined
 
-        const getSearchContent = (account?: AccountJsonAny) =>
-          [account?.name, account?.address, account?.origin?.replaceAll(/talisman/gi, "")]
+        const getSearchContent = (account?: Account) =>
+          [account?.name, account?.address, account?.type?.replaceAll(/talisman/gi, "")]
             .join(" ")
             .toLowerCase()
 
@@ -390,10 +393,10 @@ export const PortfolioAccounts = () => {
               name: account?.name ?? t("Unknown Account"),
               address: item.address,
               total: balanceTotalPerAccount?.[item.address] ?? 0,
-              genesisHash: account?.genesisHash,
-              origin: account?.origin,
-              isPortfolio: !!account?.isPortfolio,
-              signetUrl: account?.signetUrl as string | undefined,
+              genesisHash: getAccountGenesisHash(account),
+              accountType: account?.type,
+              isPortfolio: isAccountPortfolio(account),
+              signetUrl: getAccountSignetUrl(account),
               searchContent: getSearchContent(account),
             }
           : {

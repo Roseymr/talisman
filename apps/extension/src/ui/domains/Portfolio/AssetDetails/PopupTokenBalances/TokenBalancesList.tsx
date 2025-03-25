@@ -1,8 +1,8 @@
 import { TokenId } from "@talismn/chaindata-provider"
 import { classNames } from "@talismn/util"
+import { Balances } from "extension-core"
 import { ReactNode, Suspense } from "react"
 
-import { Balances } from "@extension/core"
 import { SuspenseTracker } from "@talisman/components/SuspenseTracker"
 import { ChainLogo } from "@ui/domains/Asset/ChainLogo"
 import { TokenLogo } from "@ui/domains/Asset/TokenLogo"

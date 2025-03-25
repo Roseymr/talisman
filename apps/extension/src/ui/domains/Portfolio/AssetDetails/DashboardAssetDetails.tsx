@@ -1,4 +1,5 @@
-import { Balances } from "@extension/core"
+import { Balances } from "extension-core"
+
 import { NoTokensMessage } from "@ui/domains/Portfolio/NoTokensMessage"
 
 import { TokenBalances } from "./DashboardTokenBalances"

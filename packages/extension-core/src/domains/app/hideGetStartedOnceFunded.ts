@@ -1,5 +1,5 @@
-import keyring from "@polkadot/ui-keyring"
 import { BalanceJson, Balances } from "@talismn/balances"
+import { isAccountEthereum, isAccountOfType, isAccountOwned } from "@talismn/keyring"
 import { TokenRatesList } from "@talismn/token-rates"
 import { normalizeAddress } from "@talismn/util"
 import { liveQuery } from "dexie"
@@ -7,11 +7,10 @@ import { log } from "extension-shared"
 import { combineLatest, throttleTime } from "rxjs"
 
 import { db } from "../../db"
-import { awaitKeyringLoaded } from "../../util/awaitKeyringLoaded"
-import { isAccountCompatibleWithChain, isOwnedAccountOrigin } from "../accounts/helpers"
-import { AccountType } from "../accounts/types"
+import { isAccountCompatibleWithChain } from "../accounts/helpers"
 import { balancePool } from "../balances/pool"
 import { chaindataProvider } from "../chains/chaindataProvider"
+import { keyringStore } from "../keyring/store"
 import { appStore } from "./store.app"
 import { settingsStore } from "./store.settings"
 
@@ -23,11 +22,9 @@ export const hideGetStartedOnceFunded = async () => {
   const hideGetStarted = await appStore.get("hideGetStarted")
   if (hideGetStarted) return
 
-  await awaitKeyringLoaded()
-
   const sub = combineLatest([
     settingsStore.observable,
-    keyring.accounts.subject,
+    keyringStore.accounts$,
     chaindataProvider.tokensByIdObservable,
     chaindataProvider.chainsByIdObservable,
     balancePool.observable,
@@ -36,27 +33,24 @@ export const hideGetStartedOnceFunded = async () => {
     .pipe(throttleTime(1_000, undefined, { trailing: true }))
     .subscribe(async ([settings, accounts, tokens, chainsById, balances, allTokenRates]) => {
       try {
-        const ownedAddresses = Object.entries(accounts)
-          .filter(([, acc]) => isOwnedAccountOrigin(acc.json.meta.origin as AccountType))
-          .map(([address]) => normalizeAddress(address))
+        const mapOwnedAccounts = Object.fromEntries(
+          accounts.filter(isAccountOwned).map((account) => [account.address, account]),
+        )
 
-        if (!ownedAddresses.length) return
+        if (!Object.keys(mapOwnedAccounts).length) return
 
         const balancesByAddress = Object.values(balances).reduce(
           (acc, balance) => {
             const address = normalizeAddress(balance.address)
-            if (!ownedAddresses.includes(address)) return acc
-
-            const account = accounts[balance.address]
+            const account = mapOwnedAccounts[address]
             if (!account) return acc
 
             if (!acc[address]) acc[address] = []
-            if (account.type === "ethereum") acc[address].push(balance)
+            if (isAccountEthereum(account)) acc[address].push(balance)
             else {
               const chain = "chainId" in balance && balance.chainId && chainsById[balance.chainId]
-              if (!chain || !account.type) return acc
-              if (isAccountCompatibleWithChain(chain, account.type, account.json.meta.genesisHash))
-                acc[address].push(balance)
+              if (!chain || isAccountOfType(account, "contact")) return acc
+              if (isAccountCompatibleWithChain(chain, account)) acc[address].push(balance)
             }
             return acc
           },
@@ -67,7 +61,7 @@ export const hideGetStartedOnceFunded = async () => {
           allTokenRates.map(({ tokenId, rates }) => [tokenId, rates]),
         )
 
-        for (const address of ownedAddresses) {
+        for (const address of Object.keys(mapOwnedAccounts)) {
           const accBalances = new Balances(balancesByAddress[address] ?? [], {
             tokens,
             tokenRates,
