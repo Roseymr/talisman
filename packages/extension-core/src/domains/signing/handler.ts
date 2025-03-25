@@ -106,10 +106,10 @@ export default class SigningHandler extends ExtensionHandler {
             signedTransaction = tx.toHex()
           } catch (cause) {
             const error = new Error(`Failed to create signedTransaction`, { cause })
-            console.warn(error) // eslint-disable-line no-console
             sentry.captureException(error, {
               extra: { chainId: chain?.id, chainName: chain?.name },
             })
+            throw error
           }
         }
 
