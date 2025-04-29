@@ -5,9 +5,9 @@ import { AccountExportModal } from "@ui/domains/Account/AccountExportModal"
 import { AccountExportPrivateKeyModal } from "@ui/domains/Account/AccountExportPrivateKeyModal"
 import { AccountRemoveModal } from "@ui/domains/Account/AccountRemoveModal"
 import { AccountRenameModal } from "@ui/domains/Account/AccountRenameModal"
-import { BuyTokensModal } from "@ui/domains/Asset/Buy/BuyTokensModal"
 import { CopyAddressModal } from "@ui/domains/CopyAddress"
 import { GetStartedModals } from "@ui/domains/Portfolio/GetStarted/GetStartedModals"
+import { RampsModal } from "@ui/domains/Ramps/RampsModal"
 import { MigratePasswordModal } from "@ui/domains/Settings/MigratePassword/MigratePasswordModal"
 import { BondModal } from "@ui/domains/Staking/Bond/BondModal"
 import { NomPoolWithdrawModal } from "@ui/domains/Staking/NomPoolWithdraw/NomPoolWithdrawModal"
@@ -40,7 +40,7 @@ export const DashboardNotificationsAndModals = () => {
       <DashboardNotifications />
       {/* below components can be rendered from anywhere */}
       <BackupWarningModal />
-      <BuyTokensModal />
+      <RampsModal />
       <AccountRenameModal />
       <AccountExportModal />
       <AccountExportPrivateKeyModal />

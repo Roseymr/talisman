@@ -6,10 +6,11 @@ import { PostHogCaptureProperties } from "../analytics/types"
 
 export type RemoteConfigStoreData = {
   featureFlags: FeatureFlags
-  rampConfig: RampConfig
-  rampSupportedTokenIds: Record<string, string>
-  buyTokens: {
-    tokenIds: TokenId[]
+  ramps: {
+    coinbaseProjectId: string
+    pinnedTokens: TokenId[]
+    rampApiKey: string
+    rampNetworks: Record<string, string> // maps a Ramp network ID to an EvmNetworkId or ChainId
   }
   coingecko: {
     apiUrl: string
@@ -124,10 +125,4 @@ export interface AppMessages {
   "pri(app.phishing.addException)": [RequestAllowPhishingSite, boolean]
   "pri(app.resetWallet)": [null, boolean]
   "pri(app.requests)": [null, boolean, ValidRequests[]]
-}
-
-type RampConfig = {
-  rampBasePath: string
-  rampApiBasePath: string
-  rampApiKey: string
 }

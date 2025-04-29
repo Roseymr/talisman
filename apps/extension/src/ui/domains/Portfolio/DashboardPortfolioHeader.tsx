@@ -37,7 +37,7 @@ import { IS_EMBEDDED_POPUP } from "@ui/util/constants"
 import { AccountContextMenu } from "../Account/AccountContextMenu"
 import { AccountTypeIcon } from "../Account/AccountTypeIcon"
 import { FolderContextMenu } from "../Account/FolderContextMenu"
-import { useBuyTokensModal } from "../Asset/Buy/hooks/useBuyTokensModal"
+import { useRampsModal } from "../Ramps/useRampsModal"
 import { usePortfolioNavigation } from "./usePortfolioNavigation"
 
 const SelectionScope: FC<{ account: Account | null; folder?: TreeFolder | null }> = ({
@@ -234,7 +234,7 @@ const TopActions: FC = () => {
   const { selectedAccounts, selectedAccount } = usePortfolioNavigation()
   const { t } = useTranslation()
   const { open: openCopyAddressModal } = useCopyAddressModal()
-  const { open: openBuyTokensModal } = useBuyTokensModal()
+  const { open: openRampsModal } = useRampsModal()
   const canBuy = useFeatureFlag("BUY_CRYPTO")
   const showQuestLink = useFeatureFlag("QUEST_LINK")
 
@@ -294,10 +294,10 @@ const TopActions: FC = () => {
         canBuy
           ? {
               analyticsName: "Goto" as const,
-              analyticsAction: "Buy Crypto button",
+              analyticsAction: "open ramps",
               label: t("Buy/Sell"),
               icon: CreditCardIcon,
-              onClick: () => openBuyTokensModal(),
+              onClick: () => openRampsModal(),
               disabled: disableActions,
               disabledReason,
             }
@@ -313,7 +313,7 @@ const TopActions: FC = () => {
       selectedAddress,
       symbol,
       openCopyAddressModal,
-      openBuyTokensModal,
+      openRampsModal,
     ],
   )
 

@@ -15,10 +15,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "talisman-ui"
 
 import { api } from "@ui/api"
 import { AnalyticsEventName, AnalyticsPage, sendAnalyticsEvent } from "@ui/api/analytics"
-import { useBuyTokensModal } from "@ui/domains/Asset/Buy/hooks/useBuyTokensModal"
 import { currencyConfig } from "@ui/domains/Asset/currencyConfig"
 import { Fiat } from "@ui/domains/Asset/Fiat"
 import { useCopyAddressModal } from "@ui/domains/CopyAddress"
+import { useRampsModal } from "@ui/domains/Ramps/useRampsModal"
 import { useAnalytics } from "@ui/hooks/useAnalytics"
 import { usePortfolioAccounts } from "@ui/hooks/usePortfolioAccounts"
 import { useToggleCurrency } from "@ui/hooks/useToggleCurrency"
@@ -163,7 +163,7 @@ const ANALYTICS_PAGE: AnalyticsPage = {
 const TopActions = ({ disabled }: { disabled?: boolean }) => {
   const { t } = useTranslation()
   const { open: openCopyAddressModal } = useCopyAddressModal()
-  const { open: openBuyTokensModal } = useBuyTokensModal()
+  const { open: openRampsModal } = useRampsModal()
   const ownedAccounts = useAccounts("owned")
   const canBuy = useFeatureFlag("BUY_CRYPTO")
   const showQuestLink = useFeatureFlag("QUEST_LINK")
@@ -212,10 +212,10 @@ const TopActions = ({ disabled }: { disabled?: boolean }) => {
         canBuy
           ? {
               analyticsName: "Goto" as const,
-              analyticsAction: "Buy Crypto button",
+              analyticsAction: "open ramps",
               label: t("Buy/Sell"),
               icon: CreditCardIcon,
-              onClick: () => openBuyTokensModal(),
+              onClick: () => openRampsModal(),
               disabled: disableActions,
               disabledReason,
             }
@@ -226,7 +226,7 @@ const TopActions = ({ disabled }: { disabled?: boolean }) => {
       disableActions,
       disabledReason,
       handleSwapClick,
-      openBuyTokensModal,
+      openRampsModal,
       openCopyAddressModal,
       t,
     ],
