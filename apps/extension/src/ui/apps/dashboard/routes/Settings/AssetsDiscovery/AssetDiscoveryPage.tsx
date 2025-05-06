@@ -1,6 +1,6 @@
 import { bind } from "@react-rxjs/core"
 import { Address, BalanceFormatter } from "@talismn/balances"
-import { Chain, EvmNetwork, EvmNetworkId, Token, TokenId } from "@talismn/chaindata-provider"
+import { Chain, EvmNetworkId, SimpleEvmNetwork, Token, TokenId } from "@talismn/chaindata-provider"
 import {
   ChevronDownIcon,
   DiamondIcon,
@@ -64,7 +64,6 @@ import {
   useEvmNetwork,
   useEvmNetworks,
   useEvmNetworksMap,
-  useSetting,
   useToken,
   useTokens,
   useTokensMap,
@@ -120,7 +119,7 @@ const AccountsTooltip: FC<{ addresses: Address[] }> = ({ addresses }) => {
   )
 }
 
-const NetworksTooltip: FC<{ networks: (EvmNetwork | Chain)[] }> = ({ networks }) => {
+const NetworksTooltip: FC<{ networks: (Chain | SimpleEvmNetwork)[] }> = ({ networks }) => {
   const { t } = useTranslation()
 
   const tokens = useTokens()
@@ -382,8 +381,7 @@ const Header: FC = () => {
   const { balances, accountsCount, networksCount, tokensCount, percent, isInProgress } =
     useAssetDiscoveryScanProgress()
 
-  const [includeTestnets] = useSetting("useTestnets")
-  const allNetworks = useEvmNetworks({ activeOnly: false, includeTestnets })
+  const allNetworks = useEvmNetworks({ activeOnly: false, includeTestnets: true })
 
   const activeNetworks = useActiveEvmNetworksState()
   const recommendedNetworks = useMemo(() => {
@@ -523,7 +521,7 @@ const AccountsWrapper: FC<{
 
 const NetworksWrapper: FC<{
   children?: ReactNode
-  networks: (EvmNetwork | Chain)[]
+  networks: (Chain | SimpleEvmNetwork)[]
   className?: string
 }> = ({ children, networks, className }) => {
   return (
@@ -585,7 +583,7 @@ const ScanInfo: FC = () => {
     () => accounts.filter((a) => lastScanAccounts.includes(a.address)),
     [accounts, lastScanAccounts],
   )
-  const lastNetworks = useMemo<(EvmNetwork | Chain)[]>(
+  const lastNetworks = useMemo<(Chain | SimpleEvmNetwork)[]>(
     () => lastScanNetworks.map((id) => evmNetworksMap[id] ?? chainsMap[id]).filter(isNotNil),
     [chainsMap, evmNetworksMap, lastScanNetworks],
   )

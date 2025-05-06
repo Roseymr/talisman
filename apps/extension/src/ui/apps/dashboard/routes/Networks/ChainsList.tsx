@@ -16,21 +16,20 @@ import {
   useChains,
   useIsBalanceInitializing,
   useRemoteConfig,
-  useSetting,
 } from "@ui/state"
 
 import { ANALYTICS_PAGE } from "./analytics"
 import { CustomPill, TestnetPill } from "./Pills"
 
-export const ChainsList: FC<{ activeOnly: boolean; search?: string }> = ({
+export const ChainsList: FC<{ activeOnly: boolean; showTestnets: boolean; search?: string }> = ({
   activeOnly,
+  showTestnets,
   search,
 }) => {
   const { t } = useTranslation("admin")
-  const [includeTestnets] = useSetting("useTestnets")
   const { recommendedNetworks } = useRemoteConfig()
   const networksActiveState = useActiveChainsState()
-  const chains = useChains({ activeOnly: false, includeTestnets })
+  const chains = useChains({ activeOnly: false, includeTestnets: showTestnets })
 
   const allSortedNetworks = useMemo(() => {
     return chains.concat().sort((n1, n2) => {
@@ -137,10 +136,16 @@ export const ChainsList: FC<{ activeOnly: boolean; search?: string }> = ({
           <ResetAllNetworksModalContent onClose={ocResetAllModal.close} />
         </Modal>
         <Modal isOpen={ocActivateAllModal.isOpen} onDismiss={ocActivateAllModal.close}>
-          <ActivateNetworksModalContent onClose={ocActivateAllModal.close} />
+          <ActivateNetworksModalContent
+            showTestnets={showTestnets}
+            onClose={ocActivateAllModal.close}
+          />
         </Modal>
         <Modal isOpen={ocDeactivateAllModal.isOpen} onDismiss={ocDeactivateAllModal.close}>
-          <DeactivateNetworksModalContent onClose={ocDeactivateAllModal.close} />
+          <DeactivateNetworksModalContent
+            showTestnets={showTestnets}
+            onClose={ocDeactivateAllModal.close}
+          />
         </Modal>
       </div>
       <VirtualizedRows networks={sortedChains} activeNetworksState={networksActiveState} />
@@ -246,7 +251,7 @@ const ResetAllNetworksModalContent: FC<{
   return (
     <ModalDialog title={t("Reset Polkadot networks")} onClose={onClose}>
       <div className="text-body-secondary mb-8 text-sm">
-        {t("This will reset active state of all networks to their Talisman defaults.")}
+        {t("This will reset active state of all Polkadot networks to their Talisman defaults.")}
       </div>
 
       <div className="mt-4 flex justify-end gap-8">
@@ -262,21 +267,21 @@ const ResetAllNetworksModalContent: FC<{
 type ActivateMode = "recommended" | "all"
 
 const ActivateNetworksModalContent: FC<{
+  showTestnets: boolean
   onClose: () => void
-}> = ({ onClose }) => {
+}> = ({ showTestnets, onClose }) => {
   const { t } = useTranslation("admin")
 
-  const [includeTestnets] = useSetting("useTestnets")
-  const networks = useChains({ activeOnly: false, includeTestnets })
+  const networks = useChains({ activeOnly: false, includeTestnets: showTestnets })
   const activeNetworks = useActiveChainsState()
 
   const recommendedNetworkIds = useMemo(() => {
     // all networks that are either default or have an enabled token
     return networks
-      .filter((n) => n.isDefault && (!n.isTestnet || includeTestnets))
+      .filter((n) => n.isDefault && (!n.isTestnet || showTestnets))
       .filter((n) => !isChainActive(n, activeNetworks))
       .map((n) => n.id)
-  }, [activeNetworks, networks, includeTestnets])
+  }, [activeNetworks, networks, showTestnets])
 
   const allNetworkIds = useMemo(() => {
     return networks.filter((n) => !isChainActive(n, activeNetworks)).map((n) => n.id)
@@ -340,13 +345,13 @@ const ActivateNetworksModalContent: FC<{
 type DeactivateMode = "all" | "unused"
 
 const DeactivateNetworksModalContent: FC<{
+  showTestnets: boolean
   onClose: () => void
-}> = ({ onClose }) => {
+}> = ({ showTestnets, onClose }) => {
   const { t } = useTranslation("admin")
   const isBalancesInitializing = useIsBalanceInitializing()
-  const [includeTestnets] = useSetting("useTestnets")
   const balances = useBalances("all")
-  const chains = useChains({ activeOnly: true, includeTestnets })
+  const chains = useChains({ activeOnly: true, includeTestnets: showTestnets })
 
   const [activeChainIds, unusedChainIds] = useMemo(() => {
     const networkIds = chains.map((chain) => chain.id)
