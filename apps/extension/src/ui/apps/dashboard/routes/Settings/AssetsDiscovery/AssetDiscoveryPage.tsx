@@ -391,8 +391,8 @@ const Header: FC = () => {
     )
   }, [activeNetworks, allNetworks])
 
-  const allAccounts = useAccounts("all")
-  const addresses = allAccounts.map((a) => a.address)
+  const allAccounts = useAccounts("all-except-contacts")
+  const addresses = useMemo(() => allAccounts.map((a) => a.address), [allAccounts])
 
   const effectivePercent = isInitializing ? 0 : percent
 
@@ -402,6 +402,7 @@ const Header: FC = () => {
       await api.assetDiscoveryStartScan({
         networkIds: (all ? allNetworks : recommendedNetworks).map((n) => n.id),
         addresses,
+        withApi: true,
       })
       isInitializingScan$.next(false)
     },
