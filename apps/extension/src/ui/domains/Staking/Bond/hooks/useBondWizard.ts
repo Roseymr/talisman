@@ -10,11 +10,11 @@ import { useScaleApi } from "@ui/hooks/sapi/useScaleApi"
 import { useAnalytics } from "@ui/hooks/useAnalytics"
 import { useAccountByAddress, useBalance, useToken, useTokenRates } from "@ui/state"
 
-import { useExistentialDeposit } from "../../../hooks/useExistentialDeposit"
-import { useFeeToken } from "../../SendFunds/useFeeToken"
-import { useGetStakeInfo } from "../shared/useGetStakeInfo"
+import { useExistentialDeposit } from "../../../../hooks/useExistentialDeposit"
+import { useFeeToken } from "../../../SendFunds/useFeeToken"
+import { useGetStakeInfo } from "../../shared/useGetStakeInfo"
 
-type WizardStep = "form" | "review" | "follow-up" | "select"
+type WizardStep = "form" | "review" | "follow-up"
 
 type WizardState = {
   step: WizardStep

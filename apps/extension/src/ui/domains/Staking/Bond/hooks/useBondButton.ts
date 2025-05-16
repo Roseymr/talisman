@@ -6,14 +6,20 @@ import { MouseEventHandler, useCallback, useMemo } from "react"
 import { useAnalytics } from "@ui/hooks/useAnalytics"
 import { useAccounts, useRemoteConfig, useToken } from "@ui/state"
 
+import { useBittensorBondModal } from "../../Bittensor/hooks/useBittensorBondModal"
+import { type StakeType } from "../../Bittensor/hooks/useBittensorBondWizard"
 import { useBondModal } from "./useBondModal"
 
 export const useBondButton = ({
   tokenId,
   balances,
+  stakeType = "root",
+  netuid,
 }: {
   tokenId: TokenId | null | undefined
   balances: Balances | null | undefined
+  stakeType?: StakeType
+  netuid?: number
 }) => {
   const { genericEvent } = useAnalytics()
 
@@ -21,6 +27,7 @@ export const useBondButton = ({
   const token = useToken(tokenId)
   const remoteConfig = useRemoteConfig()
   const { open } = useBondModal()
+  const { open: handleOpenBittensorModal } = useBittensorBondModal()
 
   const ownedAddresses = useMemo(() => ownedAccounts.map(({ address }) => address), [ownedAccounts])
 
@@ -68,12 +75,16 @@ export const useBondButton = ({
       for (const balance of sorted.filter((b) => b.address === address)) {
         switch (token.chain.id) {
           case "bittensor": {
-            type SubtensorMeta = { hotkeys?: string[] } | undefined
+            type SubtensorMeta = { hotkey?: string; netuid?: number } | undefined
             const entry = balance.subtensor.find(
-              (b) => !!(b.meta as SubtensorMeta)?.hotkeys?.length,
+              (b) =>
+                !!(b.meta as SubtensorMeta)?.hotkey && (b.meta as SubtensorMeta)?.netuid === netuid,
             )
+
             const meta = entry?.meta as SubtensorMeta
-            if (meta?.hotkeys?.[0]) return [{ tokenId, address, poolId: meta?.hotkeys[0] }, false]
+            if (meta?.hotkey) {
+              return [{ tokenId, address, poolId: meta?.hotkey, netuid }, true]
+            }
             break
           }
           default: {
@@ -93,18 +104,27 @@ export const useBondButton = ({
     }
 
     return [null, false]
-  }, [balances, remoteConfig, tokenId, token?.chain, token?.type, address, sorted])
+  }, [balances, remoteConfig, tokenId, token?.chain, token?.type, address, sorted, netuid])
 
   const handleClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       if (!openArgs) return
-
       e.stopPropagation()
 
-      open(openArgs)
+      if (token?.chain?.id === "bittensor") {
+        handleOpenBittensorModal({
+          ...openArgs,
+          stakeType,
+          isSelectStakeDrawerOpen: stakeType === "root",
+          step: stakeType === "root" ? "form" : "subnet-form",
+          netuid,
+        })
+      } else {
+        open(openArgs)
+      }
       genericEvent("open inline staking modal", { tokenId: openArgs.tokenId, from: "portfolio" })
     },
-    [genericEvent, open, openArgs],
+    [openArgs, token?.chain?.id, genericEvent, handleOpenBittensorModal, stakeType, open, netuid],
   )
 
   return { canBondNomPool: !!openArgs, onClick: openArgs ? handleClick : null, isNomPoolStaking }
