@@ -19,18 +19,27 @@ export type SortMethod = {
   isDisabled?: boolean
 }
 
-const sortMethods: SortMethod[] = [
-  { label: "Total Staked", value: "totalStaked" },
-  { label: "Name", value: "name" },
-  { label: "N° of Stakers", value: "totalStakers" },
-  { label: "Rewards", value: "apr" },
-]
-
 export const BittensorBondDelegateSelect = () => {
   const { poolId, stakeType, setStep, setPoolId } = useBittensorBondWizard()
   const [selectedPoolId, setSelectedPoolId] = useState<number | string | null>(poolId)
-  const [selectedSortMethod, setSelectedSortMethod] = useState<SortMethod>(sortMethods[0])
+
   const [sortedDelegators, setSortedDelegators] = useState<BondOptionType[]>([])
+
+  const sortMethods = useMemo(() => {
+    const methods: SortMethod[] = [
+      { label: "Total Staked", value: "totalStaked" },
+      { label: "Name", value: "name" },
+      { label: "N° of Stakers", value: "totalStakers" },
+    ]
+
+    if (stakeType === "root") {
+      methods.push({ label: "Rewards", value: "apr" })
+    }
+
+    return methods
+  }, [stakeType])
+
+  const [selectedSortMethod, setSelectedSortMethod] = useState<SortMethod>(sortMethods[0])
 
   const { t } = useTranslation()
 
@@ -77,6 +86,7 @@ export const BittensorBondDelegateSelect = () => {
     combinedValidatorsData,
     combinedValidatorsDataLoading,
     sortBondOptions,
+    sortMethods,
     sortedDelegators.length,
   ])
 
@@ -101,7 +111,7 @@ export const BittensorBondDelegateSelect = () => {
 
   return (
     <div className="flex h-full flex-col gap-y-[16px] pt-8">
-      <ScrollContainerDraggableHorizontal className="flex justify-between gap-2">
+      <ScrollContainerDraggableHorizontal className="flex gap-6">
         {sortMethods.map((method) => (
           <button
             key={method.label}
@@ -121,7 +131,7 @@ export const BittensorBondDelegateSelect = () => {
       <div className="space-y-[8px]">
         <div className="text-body-disabled flex justify-between px-[10px] text-sm">
           <div>{t("Name")}</div>
-          <div>{t("Est. Rewards")}</div>
+          {stakeType === "root" && <div>{t("Est. Rewards")}</div>}
         </div>
         <ScrollContainer className="h-[34.5rem]" innerClassName="space-y-[0.8rem]">
           {isLoading && sortedDelegators.length === 0
