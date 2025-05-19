@@ -83,16 +83,29 @@ export const filterAccountsByAddresses =
       })
   }
 
+type GetPublicAccountsOptions = {
+  developerMode?: boolean
+  includePortalOnlyInfo?: boolean
+}
+
 export const getPublicAccounts = (
   accounts: Account[],
   filterFn: (accounts: Account[]) => Account[] = (accounts) => accounts,
-  options = { includeWatchedAccounts: false },
+  options: GetPublicAccountsOptions = {
+    developerMode: false,
+    includePortalOnlyInfo: false,
+  },
 ) =>
   filterFn(accounts)
-    .filter((a) => a.type !== "contact")
-    .filter((a) => options.includeWatchedAccounts || a.type !== "watch-only")
+    .filter((a) => {
+      if (options.developerMode) return true
+      if (options.includePortalOnlyInfo) return a.type !== "contact"
+      return !["watch-only", "contact"].includes(a.type)
+    })
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) // TODO apply catalog order ?
-    .map((x) => getPjsInjectedAccount(x, { includePortalOnlyInfo: options.includeWatchedAccounts }))
+    .map((x) =>
+      getPjsInjectedAccount(x, { includePortalOnlyInfo: !!options.includePortalOnlyInfo }),
+    )
 
 export const getDerivationPathForCurve = (curve: KeypairCurve, accountIndex: number) => {
   switch (curve) {
